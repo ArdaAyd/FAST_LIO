@@ -1,0 +1,68 @@
+# Unitree Go2 + Velodyne VLP-16 (Gazebo Harmonic) icin FAST-LIO2 yapilandirmasi.
+# Butun degerler kayitlar/referans_temiz uzerinde OLCULDU, varsayilan degil.
+/**:
+    ros__parameters:
+        feature_extract_enable: false
+        point_filter_num: 4
+        max_iteration: 3
+        filter_size_surf: 0.5
+        filter_size_map: 0.5
+        cube_side_length: 1000.0
+        runtime_pos_log_enable: false
+        map_file_path: "./test.pcd"
+
+        common:
+            lid_topic:  "/velodyne_points/points"   # ros_gz koprusunun adi; yukari akis "/velodyne_points" varsayiyor
+            imu_topic:  "/imu/data"
+            time_sync_en: false
+            time_offset_lidar_to_imu: 0.0
+
+        preprocess:
+            lidar_type: 2                # 2 = Velodyne (standart PointCloud2)
+            scan_line: 16                # VLP-16; olculdu: 16 halka (0..15)
+            scan_rate: 10                # Hz; olculdu: 10.00 Hz
+            # ONEMLI: bag once tools/bulut_duzelt.py'den gecirilmeli.
+            # Gazebo'nun gpu_lidar'i nokta-basina ZAMAN ALANI uretmiyor;
+            # o alan olmadan PCL degerleri doldurmuyor ve FAST-LIO COP
+            # zamanlarla hareket duzeltmesi yapip daginiyor.
+            # Olculen ATE (ayni kayit, 9 m'lik rota):
+            #   zaman alani yok          -> 372 m   (tamamen iraksadi)
+            #   time = 0 (azimuttan turet) -> 1.84 m
+            #   time = sabit (duzeltme yok) -> 0.033 m
+            # Simule LiDAR GLOBAL DEKLANSOR: butun noktalar ayni anda
+            # aliniyor, taramanin icinde duzeltilecek hareket yok. Sabit
+            # zaman bunu dogru ifade ediyor; azimuttan turetmek olmayan bir
+            # bozulmayi "duzeltip" hatayi 55 kat buyutuyor.
+            timestamp_unit: 2
+            blind: 0.5                   # yukari akis varsayilani 2.0 idi:
+                                         # olculdu, noktalarin %20.4'unu atiyordu
+                                         # (4 m genisligindeki koridorda duvarlar).
+                                         # 0.5 m'de hicbir nokta kaybedilmiyor.
+
+        mapping:
+            acc_cov: 0.1
+            gyr_cov: 0.1
+            b_acc_cov: 0.0001
+            b_gyr_cov: 0.0001
+            fov_degree:    360.0
+            det_range:     60.0          # olculen en uzak donus ~51.6 m
+            extrinsic_est_en:  false
+            # IMU cercevesinde LiDAR konumu. tf_static'ten olculdu:
+            #   base_link -> trunk     = [0, 0, 0]      (birim)
+            #   trunk     -> imu_link  = [0, 0, 0]      (birim)
+            #   base_link -> velodyne  = [0.2, 0, 0.1177]
+            # Donus birim (q = [0,0,0,1]).
+            extrinsic_T: [ 0.2, 0.0, 0.1177 ]
+            extrinsic_R: [ 1., 0., 0.,
+                           0., 1., 0.,
+                           0., 0., 1.]
+
+        publish:
+            path_en:  true
+            scan_publish_en:  true
+            dense_publish_en: false      # kampanyada disk tasarrufu
+            scan_bodyframe_pub_en: false
+
+        pcd_save:
+            pcd_save_en: false           # kampanyada harita dosyasi gerekmiyor
+            interval: -1
